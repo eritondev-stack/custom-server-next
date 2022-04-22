@@ -12,7 +12,10 @@ console.log(process.env)
 
 function App() {
   const [qr, setQr] = useState("");
-  const [pairs, setParis] = useState<any>({});
+  const [pairs, setPairs] = useState<{
+    symbol: string;
+    price: number;
+  }[]>([]);
 
   useEffect(() => {
     socketGlobal.on("QR", (data) => {
@@ -20,14 +23,14 @@ function App() {
     });
 
     socketGlobal.on("CTRADER", (data) => {
-      console.log(pairs)
-      setParis(data);
+      setPairs(data);
     });
 
   }, []);
 
   return (
     <>
+    <div>Total de pares: {pairs.length}</div>
     <div className="p-12">
       
 <QRCode value={qr} />
@@ -42,6 +45,13 @@ function App() {
         Acessar whatsapp
       </button>
     </div>
+    <table>
+      <tbody>
+       {pairs.map((item) => {
+         return <div>{item.symbol}: {item.price}</div>
+       })}
+      </tbody>
+    </table>
     </>
   );
 }

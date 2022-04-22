@@ -8,7 +8,11 @@ const { Client } = require('whatsapp-web.js');
 const { Mida, MidaBroker, MidaMarketWatcher } = require("@reiryoku/mida");
 Mida.use(require("@reiryoku/mida-ctrader"));
 
-const client = new Client();
+const client = new Client({
+    puppeteer: {
+        args: ['--no-sandbox']
+    }
+});
 
 declare global {
     // eslint-disable-next-line no-var
@@ -24,7 +28,10 @@ const access = {
     cTraderBrokerAccountId: "22250731",
 };
 
-var allPairs = {}
+var allPairs: {
+    symbol: string;
+    price: number;
+}[] = []
 
 async function getAccount() {
     const myAccount = await MidaBroker.login("cTrader", access);
@@ -34,9 +41,6 @@ async function getAccount() {
     for (let index = 0; index < symbols.length; index++) {
         const pair = symbols[index];
         await whats(pair, myAccount)
-
-        //const price = await myAccount.getSymbolAsk("EURUSD")
-        //console.log(pair + ": " + price)
     }
 }
 
@@ -49,11 +53,18 @@ async function whats(symbol: any, myAccount: any) {
 
         marketWatcher.on("tick", (event: any) => {
             const { tick, } = event.descriptor;
-            allPairs = {
-                ...allPairs,
-                [symbol]: tick.bid
+            const isExist = allPairs.filter(item => item.symbol === symbol).length > 0
+            if(isExist){
+                //console.log('Ja existe por favor atualizar')
+                const objIndex = allPairs.findIndex((obj => obj.symbol === symbol));
+                allPairs[objIndex].price = Number(tick.bid)         
+            }else{
+                allPairs.push({
+                    symbol: symbol,
+                    price: Number(tick.bid)              
+                })
             }
-            console.log(symbol + ': ' + tick.bid);
+            //console.log(symbol + ': ' + tick.bid);
             global.SocketServer.emit('CTRADER', allPairs)
         });
     } catch (e) {
