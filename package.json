@@ -6,10 +6,12 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@firebase/firestore": "^3.4.8",
     "@reiryoku/mida": "^5.0.1",
     "@reiryoku/mida-ctrader": "^2.1.0",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "firebase": "^9.6.11",
     "next": "latest",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
@@ -29,6 +31,6 @@
     "postcss-preset-env": "^7.4.3",
     "tailwindcss": "^3.0.23",
     "ts-node": "^8.10.2",
-    "typescript": "4.0"
+    "typescript": "^4.6.3"
   }
 }
