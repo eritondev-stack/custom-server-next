@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import socketIOClient, { Socket } from "socket.io-client";
 import QRCode from "react-qr-code";
 import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
-import firebaseApp from '../services/firebase-app'
+import { app } from '../services/firebase-app'
 
-const auth = getAuth(firebaseApp);
+const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
 
