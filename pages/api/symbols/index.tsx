@@ -1,19 +1,21 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
-
+import { getPairs } from 'services/firebase-database'
+import { db } from '../../../database/index'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
-   if(req.method === "POST"){
-     //console.log(req.body)
-     global.SocketServer.emit("MT5", req.body)
-    try{
-        
-      res.status(200).json('eriton')
+   if(req.method === "GET"){
+
+    try{      
+        const bdSelect = await await db('TB_SYMBOLS').select("*")
+        console.log(bdSelect)
+        res.status(200).json(bdSelect)
 
     }catch(e){
+    
       res.status(401).json({
-        error: 'error'
+        error: e
       })
     }
    }else{

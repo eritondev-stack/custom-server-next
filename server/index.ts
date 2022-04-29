@@ -2,9 +2,11 @@ import 'dotenv/config'
 import express, { Express, Request, Response } from 'express';
 import * as http from 'http';
 import next, { NextApiHandler } from 'next';
-import { loginFirebase } from '../services/firebase-login';
 import * as socketio from 'socket.io';
 const { Client } = require('whatsapp-web.js');
+import { MidaBrokerAccount } from "@reiryoku/mida"
+import { handleSymbols, getSymbolsCtrader, initBanco, backupBanco } from '../services/ctrader';
+
 
 
 const client = new Client({
@@ -18,7 +20,7 @@ declare global {
     var SocketServer: socketio.Server;
     // eslint-disable-next-line no-var
     var Whatsapp: any;
-    var CtraderAccount: any
+    var CtraderAccount: MidaBrokerAccount
 }
 
 
@@ -77,6 +79,10 @@ nextApp.prepare().then(async () => {
             client.initialize();
         })
 
+        socket.onAnyOutgoing(() => {
+            //console.log('Algum Evento acounteceu')
+        })
+
     });
 
     global.Whatsapp = client
@@ -84,72 +90,16 @@ nextApp.prepare().then(async () => {
     app.all('*', (req: any, res: any) => nextHandler(req, res));
 
     server.listen(port, async () => {
-        console.log(`> Ready on http://localhost:${port}`);     
-        //await loginAccount()   
-        await loginFirebase()
+        await initBanco()
+        await handleSymbols()
+        await getSymbolsCtrader()
+         setInterval( async () => {
+             try{
+                await backupBanco()
+             }catch(e){
+                 console.log(e)
+             }
+         }, 60000);
+        console.log(`> Ready on http://localhost:${port}`)       
     });
 });
-
-
-
-/* import { Mida, MidaBroker, MidaBrokerAccount, MidaMarketWatcher } from "@reiryoku/mida"
-Mida.use(require("@reiryoku/mida-ctrader"));
-
-const access = {
-    clientId: "3369_kGf0PTNhOrFR3myRVJ3U4vcNXsXPv6dKljqstauXfkxYabyvbd",
-    clientSecret: "pH80pT5BQhedjuXU7KJmwd4nsIEXOHwE8QHdsJndE9RFEgxl4f",
-    accessToken: "5r1BriH9jgSsYbcqQg3c-4WoYHP2bCbWGYIaBnxZlKA",
-    cTraderBrokerAccountId: "23208463",
-};
-
-var allPairs: {
-    symbol: string;
-    price: number;
-}[] = []
-
-async function loginAccount() {
-    if(global.CtraderAccount === undefined){
-        const myAccount = await MidaBroker.login("cTrader", access);
-        global.CtraderAccount = myAccount
-    }
-}
-
-async function getAccount() {
-    const myAccount = await MidaBroker.login("cTrader", access);
-    const symbols = await myAccount.getSymbols()
-
-
-    for (let index = 0; index < symbols.length; index++) {
-        const pair = symbols[index];
-        await whats(pair, myAccount)
-    }
-}
-
-
-async function whats(symbol: any, myAccount: any) {
-
-    const marketWatcher = new MidaMarketWatcher({ brokerAccount: myAccount, });
-    try {
-        await marketWatcher.watch(symbol, { watchTicks: true, });
-
-        marketWatcher.on("tick", (event: any) => {
-            const { tick, } = event.descriptor;
-            const isExist = allPairs.filter(item => item.symbol === symbol).length > 0
-            if(isExist){
-                //console.log('Ja existe por favor atualizar')
-                const objIndex = allPairs.findIndex((obj => obj.symbol === symbol));
-                allPairs[objIndex].price = Number(tick.bid)         
-            }else{
-                allPairs.push({
-                    symbol: symbol,
-                    price: Number(tick.bid)              
-                })
-            }
-            //console.log(symbol + ': ' + tick.bid);
-            global.SocketServer.emit('CTRADER', allPairs)
-        });
-    } catch (e) {
-        console.log(e)
-    }
-
-} */

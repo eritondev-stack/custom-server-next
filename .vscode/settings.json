@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "mysql745.umbler.com",
+            "port": 41890,
+            "driver": "MySQL",
+            "name": "umbler",
+            "database": "market-financial",
+            "username": "eritondev",
+            "password": "e4FdL9H*}U"
+        }
+    ]
+}

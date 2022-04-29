@@ -1,49 +1,41 @@
 import React, { useState, useEffect } from "react";
 import socketIOClient, { Socket } from "socket.io-client";
 import QRCode from "react-qr-code";
-import { GoogleAuthProvider, signInWithPopup, getAuth } from "firebase/auth";
-import { app } from '../services/firebase-app'
+import { getAuth } from "firebase/auth";
+import { app } from "../services/firebase-app";
 
 const auth = getAuth(app);
-
-const provider = new GoogleAuthProvider();
-
 
 var socketGlobal: Socket = socketIOClient(process.env.ENDPOINT as string, {
   transports: ["websocket"],
 });
 
-
 function App() {
   const [qr, setQr] = useState("");
-  const [pairs, setPairs] = useState<
+
+  const [ctrader, setCTrader] = useState<
     {
       symbol: string;
       price: number;
+      digits: number;
+      description: string;
     }[]
   >([]);
-
-  
-
 
   useEffect(() => {
     socketGlobal.on("QR", (data) => {
       setQr(data);
     });
 
-/*    socketGlobal.on("CTRADER", (data) => {
-      setPairs(data);
+    socketGlobal.on("CTRADER", (data) => {
+      
+      setCTrader(data);
     });
- */
-    socketGlobal.on("MT5", (data) => {
-      setPairs(data);
-    });
-    
   }, []);
 
   return (
     <>
-      <div>Total de pares: {pairs.length}</div>
+      <div>Total de pares CTrader: {ctrader.length}</div>
       <div className="p-12">
         <QRCode value={qr} />
 
@@ -57,53 +49,33 @@ function App() {
           Acessar whatsapp
         </button>
       </div>
-      <table>
-        <tbody>
-          {pairs.map((item) => {
-            return (
-              <div>
-                {item.symbol}: {item.price}
-              </div>
-            );
-          })}
-        </tbody>
-      </table>
-      <button
-          className="my-4"
-          onClick={async () => {
-            signInWithPopup(auth, provider)
-            .then((result) => {
-              // This gives you a Google Access Token. You can use it to access the Google API.
-              const credential = GoogleAuthProvider.credentialFromResult(result);
-              const token = credential?.accessToken;
-              // The signed-in user info.
-              const user = result.user;
-              console.log(user)
-              // ...
-            }).catch((error) => {
-              // Handle Errors here.
-              const errorCode = error.code;
-              const errorMessage = error.message;
-              // The email of the user's account used.
-              const email = error.email;
-              // The AuthCredential type that was used.
-              const credential = GoogleAuthProvider.credentialFromError(error);
-              // ...
-            });
-          }}
-        >
-          Login Gmail
-        </button>
+      <div className="flex flex-row ml-5">
+        <div>
+          <table>
+            <tbody>
+              {ctrader.map((item) => {
+                return (
+                  <div>
+                   Teste: {item.symbol}: {Number(item.price).toFixed(item.digits)} | digits: {item.digits} | name: {item.description}
+                  </div>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-        <button
-          className="my-4"
-          onClick={async () => {
-           auth.signOut()
-          }}
-        >
-          Logout
-        </button>
-        
+        <div></div>
+      </div>
+
+      <button
+        className="my-4"
+        onClick={async () => {
+          console.log(auth.currentUser);
+          auth.signOut();
+        }}
+      >
+        Logout
+      </button>
     </>
   );
 }

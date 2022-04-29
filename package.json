@@ -12,12 +12,15 @@
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
     "firebase": "^9.6.11",
-    "next": "latest",
+    "knex": "^2.0.0",
+    "mysql": "^2.18.1",
+    "next": "12.1.5",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-qr-code": "^2.0.5",
     "socket.io": "^4.4.1",
     "socket.io-client": "^4.4.1",
+    "sqlite3": "^5.0.6",
     "whatsapp-web.js": "^1.16.5"
   },
   "devDependencies": {
