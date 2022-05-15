@@ -205,8 +205,6 @@ async function triggerAlert(symbol: string, message: string, direction: string, 
     if (direction === "up") {
         if (alert.price >= currentPrice) {
             await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
-            symbol
-            console.log("Disparado em up")
             await db("TB_SCHEDULE_ALERTS").update({
                 active: false
             }).where({
@@ -216,8 +214,6 @@ async function triggerAlert(symbol: string, message: string, direction: string, 
     } else if (direction === "down") {
         if (alert.price <= currentPrice) {
             await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
-            message
-            console.log("Disparado em down")
             await db("TB_SCHEDULE_ALERTS").update({
                 active: false
             }).where({
