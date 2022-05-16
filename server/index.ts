@@ -5,7 +5,7 @@ import next, { NextApiHandler } from 'next';
 import * as socketio from 'socket.io';
 const { Client } = require('whatsapp-web.js');
 import { MidaBrokerAccount } from "@reiryoku/mida"
-import { handleSymbols, getSymbolsCtrader, initBanco, backupBanco, observableAlert } from '../services/ctrader';
+import { handleSymbols, getSymbolsCtrader, initBanco, backupBanco, observableAlert, getAllSymbols } from '../services/ctrader';
 
 
 
@@ -90,8 +90,15 @@ nextApp.prepare().then(async () => {
     app.all('*', (req: any, res: any) => nextHandler(req, res));
 
     server.listen(port, async () => {
-        await observableAlert()
-        await initBanco()
+ 
+       await initBanco()     
+       await getAllSymbols()
+       await observableAlert()
+
+
+       
+/*         
+        
         await handleSymbols()
         await getSymbolsCtrader()
          setInterval( async () => {
@@ -100,7 +107,8 @@ nextApp.prepare().then(async () => {
              }catch(e){
                  console.log(e)
              }
-         }, 60000);
+         }, 60000); */
+         
         console.log(`> Ready on http://localhost:${port}`)       
     });
 });

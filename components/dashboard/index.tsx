@@ -25,8 +25,17 @@ const dashboard: React.FC = () => {
   const [opa, setOpa] = useState<any[]>([]);
 
   useEffect(() => {
+
     socketGlobal.on("CTRADER", (data) => {
       setCTrader(data);
+    });
+
+    socketGlobal.on("MT5", (data) => {
+      console.log(data);
+    });
+
+    socketGlobal.on("EMITTEST", (data) => {
+      console.log(data);
     });
 
     getSymbols()

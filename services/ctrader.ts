@@ -1,5 +1,5 @@
 import { Mida, MidaBroker, MidaBrokerAccount, MidaMarketWatcher, MidaTimeframe } from "@reiryoku/mida"
-import { IAlerts } from "model";
+import { IAlerts, ISymbols } from "model";
 import { db } from '../database/index'
 import { getPairs } from "./firebase-database";
 
@@ -189,7 +189,7 @@ async function observableAlert() {
     setInterval(async () => {
         const alerts = await db<IAlerts>('TB_SCHEDULE_ALERTS').select("*").where({ active: true })
         for (const item of alerts) {
-            console.log(item)
+
             const { price, symbol } = getCurrentPair(item.symbol)
             await triggerAlert(symbol, item.message, item.direction, price, item)
         }
@@ -225,4 +225,90 @@ async function triggerAlert(symbol: string, message: string, direction: string, 
     }
 }
 
-export { handleSymbols, getSymbolsCtrader, initBanco, backupBanco, insertImgBanco, observableAlert }
+async function getAllSymbols() {
+
+    try {
+        await loginAccount()
+        const symbols = await db<ISymbols>('TB_SYMBOLS').select("*")
+
+        const onePart = await symbols.filter((_array, index) => {
+            return index < 50
+        })
+
+        const twoPart = await symbols.filter((_array, index) => {
+            return index >= 50 && index < 100
+        })
+
+        const treePart = await symbols.filter((_array, index) => {
+            return index >= 100 && index < 150
+        })
+
+        const data: { price: number, symbol: string }[] = []
+
+        for (const item of onePart) {
+            let result = 0
+            try {
+                result = await global.CtraderAccount.getSymbolBid(item.symbol)
+            } catch (error) {
+                result = -1
+            }
+            data.push({
+                symbol: item.symbol,
+                price: result
+            })
+        }
+        await later(1100)
+        console.log(new Date())
+        for (const item of twoPart) {
+            let result = 0
+            try {
+                result = await global.CtraderAccount.getSymbolBid(item.symbol)
+            } catch (error) {
+                result = -1
+            }
+            data.push({
+                symbol: item.symbol,
+                price: result
+            })
+        }
+        await later(1100)
+        console.log(new Date())
+        for (const item of treePart) {
+            let result = 0
+            try {
+                result = await global.CtraderAccount.getSymbolBid(item.symbol)
+            } catch (error) {
+                result = -1
+            }
+            data.push({
+                symbol: item.symbol,
+                price: result
+            })
+        }
+        await later(1100)
+        console.log(new Date())
+
+        for (const item of data) {
+            const objIndex = allPairs.findIndex((obj => obj.symbol === item.symbol));
+            allPairs[objIndex].price = item.price
+        }
+
+        console.log("Total Symbols: " + allPairs.length)
+        global.SocketServer.emit("CTRADER", allPairs)
+        await getAllSymbols()
+    } catch (error) {
+        console.log('Aconteceu algum erro' + error.message)
+        await getAllSymbols()
+        throw new Error("Acounteceu algum erro na promessa");
+
+    }
+
+}
+
+async function later(delay: number): Promise<void> {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, delay);
+    });
+}
+
+export { handleSymbols, getSymbolsCtrader, initBanco, backupBanco, insertImgBanco, observableAlert, getAllSymbols }

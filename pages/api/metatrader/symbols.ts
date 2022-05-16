@@ -4,23 +4,21 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 
-   if(req.method === "POST"){
-     //console.log(req.body)
-     global.SocketServer.emit("MT5", req.body)
-    try{
-        
+  if (req.method === "POST") {
+    console.log(req.body)
+    global.SocketServer.emit("MT5", req.body)
+    try {
+
       res.status(200).json('eriton')
 
-    }catch(e){
+    } catch (e) {
       res.status(401).json({
         error: 'error'
       })
     }
-   }else{
+  } else {
     res.status(401).json({
       error: 'error'
     })
-   }
-    
-        
+  }
 }
