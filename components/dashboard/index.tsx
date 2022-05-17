@@ -34,7 +34,7 @@ const dashboard: React.FC = () => {
       console.log(data);
     });
 
-    socketGlobal.on("EMITTEST", (data) => {
+    socketGlobal.on("CTRADERV2", (data) => {
       console.log(data);
     });
 

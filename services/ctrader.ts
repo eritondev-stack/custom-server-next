@@ -170,20 +170,20 @@ async function startOnSymbols(symbol: any, myAccount: MidaBrokerAccount) {
 
         marketWatcher.on("tick", (event: any) => {
             const { tick, } = event.descriptor;
-            const isExist = outher.filter(item => item.symbol === symbol).length > 0
+            const isExist = allPairs.filter(item => item.symbol === symbol).length > 0
             if (isExist) {
                 //console.log('Ja existe por favor atualizar')
-                const objIndex = outher.findIndex((obj => obj.symbol === symbol));
-                outher[objIndex].price = Number(tick.bid)
+                const objIndex = allPairs.findIndex((obj => obj.symbol === symbol));
+                allPairs[objIndex].price = Number(tick.bid)
 
-            }  else {
-                outher.push({
+            }  /* else {
+                allPairs.push({
                     symbol: symbol,
                     price: Number(tick.bid)
                 })
-            } 
+            }  */
             //console.log(outher);
-            global.SocketServer.emit('CTRADERV2', outher)
+            global.SocketServer.emit('CTRADER', allPairs)
         });
     } catch (e) {
         console.log(e)
@@ -207,7 +207,7 @@ function getCurrentPair(symbol: string) {
 }
 
 async function triggerAlert(symbol: string, message: string, direction: string, currentPrice: number, alert: IAlerts) {
-    console.log("Cuurent: " + currentPrice + "| Alert: " + alert.price)
+
     if (direction === "up") {
         if (currentPrice >= alert.price) {
             await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)

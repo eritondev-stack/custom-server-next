@@ -92,13 +92,8 @@ nextApp.prepare().then(async () => {
     server.listen(port, async () => {
 
         await initBanco()
-        setInterval(async () => {
-            await getAllSymbols()
-        }, 3300)
-
+        await handleSymbols()
         await observableAlert()
-
-
         setInterval(async () => {
             try {
                 await backupBanco()
@@ -106,11 +101,6 @@ nextApp.prepare().then(async () => {
                 console.log(e)
             }
         }, 60000);
-
-
-       await handleSymbols()
-
-
 
         /*         
                 
