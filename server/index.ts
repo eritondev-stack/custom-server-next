@@ -90,25 +90,40 @@ nextApp.prepare().then(async () => {
     app.all('*', (req: any, res: any) => nextHandler(req, res));
 
     server.listen(port, async () => {
- 
-       await initBanco()     
-       await getAllSymbols()
-       await observableAlert()
+
+        await initBanco()
+        setInterval(async () => {
+            await getAllSymbols()
+        }, 3300)
+
+        await observableAlert()
 
 
-       
-/*         
-        
-        await handleSymbols()
-        await getSymbolsCtrader()
-         setInterval( async () => {
-             try{
+        setInterval(async () => {
+            try {
                 await backupBanco()
-             }catch(e){
-                 console.log(e)
-             }
-         }, 60000); */
-         
-        console.log(`> Ready on http://localhost:${port}`)       
+            } catch (e) {
+                console.log(e)
+            }
+        }, 60000);
+
+
+       await handleSymbols()
+
+
+
+        /*         
+                
+                await handleSymbols()
+                await getSymbolsCtrader()
+                 setInterval( async () => {
+                     try{
+                        await backupBanco()
+                     }catch(e){
+                         console.log(e)
+                     }
+                 }, 60000); */
+        
+        console.log(`> Ready on http://localhost:${port}`)
     });
 });

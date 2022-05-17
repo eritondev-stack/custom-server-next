@@ -33,6 +33,8 @@ interface IAllPairs {
     img_second?: string
 }[]
 
+var outher = []
+
 
 async function insertImgBanco() {
     try {
@@ -146,16 +148,19 @@ async function getSymbolsCtrader() {
 }
 
 async function handleSymbols() {
+
     await loginAccount()
-    const symbolsAvalible: string[] = await global.CtraderAccount.getSymbols()
-    const symbolsRemove: string[] = await getSymbolsErrors()
-    const symbols: string[] = symbolsAvalible.filter((item) => symbolsRemove.filter((item2) => item === item2).length === 0)
+    //const symbolsAvalible: string[] = await global.CtraderAccount.getSymbols()
+    //const symbolsRemove: string[] = await getSymbolsErrors()
+    //const symbols: string[] = symbolsAvalible.filter((item) => symbolsRemove.filter((item2) => item === item2).length === 0)
+
+    const symbols = await db<ISymbols>('TB_SYMBOLS').select("*")
+
     for (let index = 0; index < symbols.length; index++) {
-        const pair = symbols[index];
+        const pair = symbols[index].symbol;
         await startOnSymbols(pair, global.CtraderAccount)
     }
 }
-
 
 async function startOnSymbols(symbol: any, myAccount: MidaBrokerAccount) {
 
@@ -165,20 +170,20 @@ async function startOnSymbols(symbol: any, myAccount: MidaBrokerAccount) {
 
         marketWatcher.on("tick", (event: any) => {
             const { tick, } = event.descriptor;
-            const isExist = allPairs.filter(item => item.symbol === symbol).length > 0
+            const isExist = outher.filter(item => item.symbol === symbol).length > 0
             if (isExist) {
                 //console.log('Ja existe por favor atualizar')
-                const objIndex = allPairs.findIndex((obj => obj.symbol === symbol));
-                allPairs[objIndex].price = Number(tick.bid)
+                const objIndex = outher.findIndex((obj => obj.symbol === symbol));
+                outher[objIndex].price = Number(tick.bid)
 
-            } /* else {
-                allPairs.push({
+            }  else {
+                outher.push({
                     symbol: symbol,
                     price: Number(tick.bid)
                 })
-            } */
-            //console.log(symbol + ': ' + tick.bid);
-            global.SocketServer.emit('CTRADER', allPairs)
+            } 
+            //console.log(outher);
+            global.SocketServer.emit('CTRADERV2', outher)
         });
     } catch (e) {
         console.log(e)
@@ -186,10 +191,10 @@ async function startOnSymbols(symbol: any, myAccount: MidaBrokerAccount) {
 }
 
 async function observableAlert() {
+
     setInterval(async () => {
         const alerts = await db<IAlerts>('TB_SCHEDULE_ALERTS').select("*").where({ active: true })
         for (const item of alerts) {
-
             const { price, symbol } = getCurrentPair(item.symbol)
             await triggerAlert(symbol, item.message, item.direction, price, item)
         }
@@ -202,8 +207,9 @@ function getCurrentPair(symbol: string) {
 }
 
 async function triggerAlert(symbol: string, message: string, direction: string, currentPrice: number, alert: IAlerts) {
+    console.log("Cuurent: " + currentPrice + "| Alert: " + alert.price)
     if (direction === "up") {
-        if (alert.price >= currentPrice) {
+        if (currentPrice >= alert.price) {
             await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
             await db("TB_SCHEDULE_ALERTS").update({
                 active: false
@@ -212,7 +218,7 @@ async function triggerAlert(symbol: string, message: string, direction: string, 
             })
         }
     } else if (direction === "down") {
-        if (alert.price <= currentPrice) {
+        if (currentPrice <= alert.price) {
             await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
             await db("TB_SCHEDULE_ALERTS").update({
                 active: false
@@ -295,12 +301,11 @@ async function getAllSymbols() {
 
         console.log("Total Symbols: " + allPairs.length)
         global.SocketServer.emit("CTRADER", allPairs)
-        await getAllSymbols()
+        
     } catch (error) {
         console.log('Aconteceu algum erro' + error.message)
         await getAllSymbols()
         throw new Error("Acounteceu algum erro na promessa");
-
     }
 
 }

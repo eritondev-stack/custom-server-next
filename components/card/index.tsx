@@ -7,6 +7,9 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { Button } from "@mui/material";
 import InputMask from 'react-input-mask'
 import NumberFormat from 'react-number-format';
+import { insertAlert } from "services/http";
+import { useFormik, yupToFormErrors } from "formik";
+import * as yup from 'yup'
 
 // import { Container } from './styles';
 interface ICard {
@@ -18,6 +21,25 @@ interface ICard {
 
 const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
   const [open, setOpen] = React.useState(false);
+
+  const formik = useFormik({
+    initialValues: {
+      email: "delma@gmail.com",
+      price: 0,
+      direction: "up",
+      message: "",
+      phone_number: "",
+      symbol: "",
+    },
+    validationSchema: yup.object({
+      message: yup.string().required("Esse campo é obrigatorio").min(10, "Prencher até 10 caracteres"),
+      phone_number: yup.string().required("Esse campo é obrigatorio").min(10, "Prencher até 9 caracteres"),
+      symbol: yup.string().required("Esse campo é obrigatorio").min(3, "Prencher até 3 caracteres")
+    }),
+    onSubmit: () => {
+
+    }
+  })
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -50,13 +72,16 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
                 Price: {price}
               </label>
               <NumberFormat
-              id="username-success"
-              decimalScale={digits}
-              className="p-2.5 w-full text-sm outline-none border text-gray-900 bg-gray-50 rounded-lg  border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                name="price"
+                id="price"
+                decimalScale={digits}
+                className="p-2.5 w-full text-sm outline-none border text-gray-900 bg-gray-50 rounded-lg  border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               />
 
-              <p className="mt-2 text-sm text-green-600 dark:text-green-500 hidden">
-                <span className="font-medium">Alright!</span> Username
+              <p className="mt-2 text-sm text-red-600 dark:text-red-500 hidden">
+                <span className="font-medium">Error!</span> Username
                 available!
               </p>
             </div>
@@ -94,7 +119,11 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleClose} autoFocus>
+          <Button onClick={async () => {
+            handleClose()
+            const data = await insertAlert({})
+            console.log(data)
+          }} autoFocus>
             Save
           </Button>
         </DialogActions>
