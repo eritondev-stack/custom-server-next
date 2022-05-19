@@ -2,9 +2,6 @@ import { Mida, MidaBroker, MidaBrokerAccount, MidaMarketWatcher, MidaTimeframe }
 import { IAlerts, ISymbols } from "model";
 import { db } from '../database/index'
 import { getPairs } from "./firebase-database";
-
-
-
 Mida.use(require("@reiryoku/mida-ctrader"));
 
 const access = {
@@ -32,9 +29,6 @@ interface IAllPairs {
     img_first?: string
     img_second?: string
 }[]
-
-var outher = []
-
 
 async function insertImgBanco() {
     try {
@@ -169,13 +163,16 @@ async function startOnSymbols(symbol: any, myAccount: MidaBrokerAccount) {
         await marketWatcher.watch(symbol, { watchTicks: true, });
 
         marketWatcher.on("tick", (event: any) => {
-            const { tick, } = event.descriptor;
+            const { tick } = event.descriptor;
             const isExist = allPairs.filter(item => item.symbol === symbol).length > 0
             if (isExist) {
                 //console.log('Ja existe por favor atualizar')
                 const objIndex = allPairs.findIndex((obj => obj.symbol === symbol));
                 allPairs[objIndex].price = Number(tick.bid)
-
+                
+                if(symbol === "AUDCAD"){
+                //console.log(tick.bid)
+                }
             }  /* else {
                 allPairs.push({
                     symbol: symbol,

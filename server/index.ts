@@ -4,8 +4,7 @@ import * as http from 'http';
 import next, { NextApiHandler } from 'next';
 import * as socketio from 'socket.io';
 const { Client } = require('whatsapp-web.js');
-import { MidaBrokerAccount } from "@reiryoku/mida"
-import { handleSymbols, getSymbolsCtrader, initBanco, backupBanco, observableAlert, getAllSymbols } from '../services/ctrader';
+import { backupBanco, handleSymbolsMt5, initBanco } from '../services/metatrader';
 
 
 
@@ -20,7 +19,6 @@ declare global {
     var SocketServer: socketio.Server;
     // eslint-disable-next-line no-var
     var Whatsapp: any;
-    var CtraderAccount: MidaBrokerAccount
 }
 
 
@@ -92,8 +90,8 @@ nextApp.prepare().then(async () => {
     server.listen(port, async () => {
 
         await initBanco()
-        await handleSymbols()
-        await observableAlert()
+        handleSymbolsMt5()
+        //await observableAlert()
         setInterval(async () => {
             try {
                 await backupBanco()
@@ -102,18 +100,7 @@ nextApp.prepare().then(async () => {
             }
         }, 60000);
 
-        /*         
-                
-                await handleSymbols()
-                await getSymbolsCtrader()
-                 setInterval( async () => {
-                     try{
-                        await backupBanco()
-                     }catch(e){
-                         console.log(e)
-                     }
-                 }, 60000); */
-        
+      
         console.log(`> Ready on http://localhost:${port}`)
     });
 });

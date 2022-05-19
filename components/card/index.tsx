@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -10,6 +10,13 @@ import NumberFormat from 'react-number-format';
 import { insertAlert } from "services/http";
 import { useFormik, yupToFormErrors } from "formik";
 import * as yup from 'yup'
+import socketIOClient, { Socket } from "socket.io-client";
+
+
+var socketGlobal: Socket = socketIOClient(process.env.ENDPOINT as string, {
+  transports: ["websocket"],
+});
+
 
 // import { Container } from './styles';
 interface ICard {
@@ -19,8 +26,27 @@ interface ICard {
   digits: number
 }
 
+interface ISymbol{
+  id: number;
+  symbol: string;
+  price: number;
+  digits: number;
+  description: string;
+  img_first: string;
+  img_second: string;
+}
+
 const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
   const [open, setOpen] = React.useState(false);
+  const [symbolCard, setSymbolCard] = React.useState<ISymbol>({
+    id: 0,
+    symbol: '',
+    price: 0.000,
+    digits: 0,
+    description: '',
+    img_first: '',
+    img_second: '',
+  })
 
   const formik = useFormik({
     initialValues: {
@@ -48,6 +74,22 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
   const handleClose = () => {
     setOpen(false);
   };
+
+useEffect(() => {
+  return () => {
+    console.log('Component desmontado')
+    socketGlobal.removeListener(symbol)
+  }
+},[])
+
+useEffect(() => {
+  socketGlobal.on(symbol, observableMt5)
+},[])
+
+const observableMt5 = (data: any) => {
+  setSymbolCard(data) 
+} 
+
   return (
     <>
       <Dialog
@@ -177,7 +219,7 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
               {symbol}
             </p>
             <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              {price}
+              {symbolCard.price.toFixed(digits)}
             </p>
           </div>
         </div>

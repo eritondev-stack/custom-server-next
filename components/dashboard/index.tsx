@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from "react";
-import backgroud from "../../assets/img/background.svg";
 import Card from "../../components/card/index";
-import socketIOClient, { Socket } from "socket.io-client";
 import { getSymbols } from "../../services/helpers";
 import { countries } from "../../mock/countries";
 import InputMask from 'react-input-mask'
 
-var socketGlobal: Socket = socketIOClient(process.env.ENDPOINT as string, {
-  transports: ["websocket"],
-});
-
 const dashboard: React.FC = () => {
-  const [ctrader, setCTrader] = useState<
+  var pares: any[] = []
+ const [symbols, setSymbols] = useState<
     {
+      id: number;
       symbol: string;
       price: number;
       digits: number;
@@ -21,26 +17,17 @@ const dashboard: React.FC = () => {
       img_second: string;
     }[]
   >([]);
-
   const [opa, setOpa] = useState<any[]>([]);
 
+useEffect(() => {
+console.log(symbols)
+},[symbols])
+
   useEffect(() => {
-
-    socketGlobal.on("CTRADER", (data) => {
-      setCTrader(data);
-    });
-
-    socketGlobal.on("MT5", (data) => {
-      console.log(data);
-    });
-
-    socketGlobal.on("CTRADERV2", (data) => {
-      console.log(data);
-    });
-
     getSymbols()
-      .then((data) => {
-        setCTrader(data);
+      .then((data) => {  
+        pares = data
+        setSymbols(data); 
       })
       .catch((e) => console.log(e));
 
@@ -54,11 +41,11 @@ const dashboard: React.FC = () => {
     });
 
     setOpa(map);
-  }, []);
+  },[])
+
 
   return (
     <>
-
       <div style={{
         maxHeight: "600px",
         maxWidth: "220px"
@@ -100,7 +87,7 @@ const dashboard: React.FC = () => {
         className="rounded-md flex-1 backdrop-blur-sm bg-white/30 ml-2 mt-2 p-5 overflow-y-auto"
       >
         <div className="grid gap-6 mb-8 md:grid-cols-2 xl:grid-cols-4">
-          {ctrader.map((item) => {
+          {symbols.map((item) => {
             return (
               <>
                 <Card
