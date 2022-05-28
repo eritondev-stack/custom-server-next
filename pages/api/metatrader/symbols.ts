@@ -26,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           digits: Number(obj[2])
         }
       })
-
       global.SocketServer.emit('MT5_SOCKET', convert)
       res.status(200).json({ status: "Ok" })
 

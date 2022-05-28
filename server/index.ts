@@ -1,12 +1,11 @@
+import { dbSqlite } from '../database/sqlite';
 import 'dotenv/config'
 import express, { Express, Request, Response } from 'express';
 import * as http from 'http';
 import next, { NextApiHandler } from 'next';
 import * as socketio from 'socket.io';
 const { Client } = require('whatsapp-web.js');
-import { backupBanco, handleSymbolsMt5, initBanco } from '../services/metatrader';
-
-
+import { startDatabase, handleSymbolsMt5 } from '../services/metatrader';
 
 const client = new Client({
     puppeteer: {
@@ -88,19 +87,8 @@ nextApp.prepare().then(async () => {
     app.all('*', (req: any, res: any) => nextHandler(req, res));
 
     server.listen(port, async () => {
-
-        await initBanco()
+        await startDatabase()
         handleSymbolsMt5()
-        //await observableAlert()
-        setInterval(async () => {
-            try {
-                await backupBanco()
-            } catch (e) {
-                console.log(e)
-            }
-        }, 60000);
-
-      
         console.log(`> Ready on http://localhost:${port}`)
     });
 });

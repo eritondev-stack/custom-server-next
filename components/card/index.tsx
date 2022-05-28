@@ -2,16 +2,14 @@ import React, { useEffect } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { Button } from "@mui/material";
+import { Alert, Button, Snackbar } from "@mui/material";
 import InputMask from 'react-input-mask'
 import NumberFormat from 'react-number-format';
 import { insertAlert } from "services/http";
-import { useFormik, yupToFormErrors } from "formik";
+import {  useFormik } from "formik";
 import * as yup from 'yup'
 import socketIOClient, { Socket } from "socket.io-client";
-
 
 var socketGlobal: Socket = socketIOClient(process.env.ENDPOINT as string, {
   transports: ["websocket"],
@@ -26,7 +24,7 @@ interface ICard {
   digits: number
 }
 
-interface ISymbol{
+interface ISymbol {
   id: number;
   symbol: string;
   price: number;
@@ -38,6 +36,8 @@ interface ISymbol{
 
 const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
   const [open, setOpen] = React.useState(false);
+  const [openSuccess, setOpenSuccess] = React.useState(false);
+  const [openError, setOpenError] = React.useState(false);
   const [symbolCard, setSymbolCard] = React.useState<ISymbol>({
     id: 0,
     symbol: '',
@@ -50,20 +50,37 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
 
   const formik = useFormik({
     initialValues: {
-      email: "delma@gmail.com",
       price: 0,
-      direction: "up",
       message: "",
       phone_number: "",
-      symbol: "",
     },
     validationSchema: yup.object({
       message: yup.string().required("Esse campo é obrigatorio").min(10, "Prencher até 10 caracteres"),
       phone_number: yup.string().required("Esse campo é obrigatorio").min(10, "Prencher até 9 caracteres"),
-      symbol: yup.string().required("Esse campo é obrigatorio").min(3, "Prencher até 3 caracteres")
+      price: yup.number().required("Esse campo é obrigatorio")
     }),
     onSubmit: () => {
-
+      
+      handleClose()
+      insertAlert({
+        ...formik.values,
+        direction: symbolCard.price >= formik.values.price ? "down" : "up",
+        symbol: symbolCard.symbol,
+        email: 'eriton.gomes.souza@gmail.com',
+        phone_number: formik.values.phone_number,
+        message: formik.values.message,
+        active: 1
+      }).then(() => {
+          setOpenSuccess(true)
+          setTimeout(() => {
+          setOpenSuccess(false) 
+          }, 2000)
+      }).catch((_err) => {
+          setOpenError(true)
+          setTimeout(() => {
+          setOpenError(false) 
+          }, 2000) 
+      })
     }
   })
 
@@ -75,23 +92,31 @@ const Card: React.FC<ICard> = ({ symbol, price, img_first, digits }: ICard) => {
     setOpen(false);
   };
 
-useEffect(() => {
-  return () => {
-    console.log('Component desmontado')
-    socketGlobal.removeListener(symbol)
+  useEffect(() => {
+    return () => {
+      console.log('Component desmontado')
+      socketGlobal.removeListener(symbol)
+    }
+  }, [])
+
+  useEffect(() => {
+    setSymbolCard(prev => ({ ...prev, price: Number(price) }))
+    socketGlobal.on(symbol, observableMt5)
+    setTimeout(() => {
+    formik.setFieldValue('phone_number', '+5511960655281')
+    formik.setFieldValue('message', symbol + "- ")
+    }, 1000);
+  }, [])
+
+  const observableMt5 = (data: any) => {
+    setSymbolCard(data)
   }
-},[])
-
-useEffect(() => {
-  socketGlobal.on(symbol, observableMt5)
-},[])
-
-const observableMt5 = (data: any) => {
-  setSymbolCard(data) 
-} 
 
   return (
     <>
+      <Snackbar anchorOrigin={{ horizontal: 'right', vertical: 'top'}} message="Alterado com sucesso"  open={openSuccess} autoHideDuration={6000} />
+      <Snackbar anchorOrigin={{ horizontal: 'right', vertical: 'top'}} message="Erro ao realizar alteração" open={openError} autoHideDuration={6000} />
+
       <Dialog
         open={open}
         hideBackdrop={true}
@@ -111,13 +136,14 @@ const observableMt5 = (data: any) => {
                 htmlFor="username-success"
                 className="block mb-2 text-sm font-medium text-gray-900 dark:text-green-900"
               >
-                Price: {price}
+                Price: {symbolCard.price.toFixed(digits)}
               </label>
               <NumberFormat
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 name="price"
                 id="price"
+                value={formik.values.price}
                 decimalScale={digits}
                 className="p-2.5 w-full text-sm outline-none border text-gray-900 bg-gray-50 rounded-lg  border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
               />
@@ -135,9 +161,14 @@ const observableMt5 = (data: any) => {
                 Phone number (Whatsapp)
               </label>
               <InputMask
+                id="phone_number"
+                name="phone_number"
                 mask="+99999999999999"
+                value={formik.values.phone_number}
                 maskChar={null}
-                onChange={(e) => console.log(e.target.value)}>
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+              >
                 {(props) => {
                   return (<input
                     {...props}
@@ -155,17 +186,15 @@ const observableMt5 = (data: any) => {
               </p>
 
               <label htmlFor="message" className="block mb-2 text-sm  font-medium text-gray-900 dark:text-gray-400 mt-6">Your message</label>
-              <textarea id="message" rows={4} className="block outline-none resize-none p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Leave a custom message..."></textarea>
+              <textarea value={formik.values.message} onChange={formik.handleChange} onBlur={formik.handleBlur} id="message" name="message" rows={4} className="block outline-none resize-none p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                placeholder="Leave a custom message..."
+              ></textarea>
             </div>
           </div>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={async () => {
-            handleClose()
-            const data = await insertAlert({})
-            console.log(data)
-          }} autoFocus>
+          <Button disabled={!formik.isValid} onClick={() => formik.handleSubmit()} >
             Save
           </Button>
         </DialogActions>

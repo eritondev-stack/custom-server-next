@@ -6,9 +6,11 @@ import Dashboard from "../../components/dashboard";
 
 const dashboard: React.FC = () => {
   return (
+    <>
     <Sidebar>
       <Dashboard />
     </Sidebar>
+    </>
   );
 };
 

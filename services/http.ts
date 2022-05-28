@@ -8,14 +8,7 @@ const http = axios.create({
 })
 
 const insertAlert = async (_data: any) => {
-    const resp = await http.post("/api/alert", {
-        email: "delma@gmail.com",
-        price: 50.568704,
-        direction: "up",
-        message: "Opa meu amigo",
-        phone_number: "+5511960655281",
-        symbol: "AUDCAD",      
-    })
+    const resp = await http.post("/api/alert",_data)
     return resp
 }
 

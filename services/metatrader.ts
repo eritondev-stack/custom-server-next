@@ -1,5 +1,5 @@
 import { IAlerts, ISymbols } from "model";
-import { db } from '../database/index'
+import { dbSqlite } from '../database/sqlite'
 import socketIOClient, { Socket } from "socket.io-client";
 import { ListItem } from "@mui/material";
 
@@ -28,31 +28,27 @@ interface IAllPairs {
     img_second?: string
 }[]
 
-
-
 const handleSymbolsMt5 = () => {
     socketGlobal.on('MT5_SOCKET', (data: { symbol: string; price: number; digits: number }[]) => {
         try {
 
             data.forEach(fe => {
                 const { price, symbol } = fe
+
+                observableAlertV2(symbol, price).then(() => { }).catch((_err) => { console.log(_err) })
                 global.SocketServer.emit(symbol, {
-                    ...allPairs.filter((el) => el.symbol === symbol )[0],  
-                    price: price,                   
-                }) 
+                    ...allPairs.filter((el) => el.symbol === symbol)[0],
+                    price: price,
+                })
             });
-
-        
         } catch (error) {
-
-    }
-
-})
+        }
+    })
 }
 
-async function initBanco() {
+async function startDatabase() {
     try {
-        const bdSelect = await db<IAllPairs>('TB_SYMBOLS').select("*")
+        const bdSelect = await dbSqlite<IAllPairs>('TB_SYMBOLS').select("*")
         for (const item of bdSelect) {
             allPairs.push(item)
         }
@@ -62,70 +58,36 @@ async function initBanco() {
     }
 }
 
-async function backupBanco() {
-    console.log('Backup Banco de dados')
-    try {
-        if (true) {
-            for (const item of allPairs) {
-                await db<IAllPairs>('TB_SYMBOLS').update({
-                    price: item.price,
-                }).where({
-                    symbol: item.symbol
-                })
-            }
-        }
+function triggerAlertV2(currentPrice: number, alert: IAlerts) {
 
-    } catch (err) {
-        console.log(err)
-    }
-}
-
-
-async function observableAlert() {
-
-    setInterval(async () => {
-        const alerts = await db<IAlerts>('TB_SCHEDULE_ALERTS').select("*").where({ active: true })
-        for (const item of alerts) {
-            const { price, symbol } = getCurrentPair(item.symbol)
-            await triggerAlert(symbol, item.message, item.direction, price, item)
-        }
-    }, 1000)
-}
-
-function getCurrentPair(symbol: string) {
-    const alerts = allPairs.filter((item) => item.symbol === symbol)[0]
-    return alerts
-}
-
-async function triggerAlert(symbol: string, message: string, direction: string, currentPrice: number, alert: IAlerts) {
-
-    if (direction === "up") {
+    if (alert.direction === "up") {
         if (currentPrice >= alert.price) {
-            await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
-            await db("TB_SCHEDULE_ALERTS").update({
-                active: false
-            }).where({
-                id: alert.id
-            })
+            Whatsapp.sendMessage('5511960655281@c.us', `${alert.symbol} - ${alert.message}`).then(() => { }).catch((_err) => { })
+            dbSqlite("TB_SCHEDULE_ALERTS").update({ active: false }).where({ id: alert.id }).then(() => { }).catch((_err) => { })
+            console.log(alert.symbol + ": Alert disprate")
         }
-    } else if (direction === "down") {
+    } else if (alert.direction === "down") {
         if (currentPrice <= alert.price) {
-            await Whatsapp.sendMessage('5511960655281@c.us', `${symbol} - ${message}`)
-            await db("TB_SCHEDULE_ALERTS").update({
-                active: false
-            }).where({
-                id: alert.id
-            })
+            Whatsapp.sendMessage('5511960655281@c.us', `${alert.symbol} - ${alert.message}`).then(() => { }).catch((_err) => { })
+            dbSqlite("TB_SCHEDULE_ALERTS").update({ active: false }).where({ id: alert.id }).then(() => { }).catch((_err) => { })
+            console.log(alert.symbol + ": Alert disprate")
         }
     } else {
 
     }
 }
 
-async function later(delay: number): Promise<void> {
-    return new Promise(function (resolve) {
-        setTimeout(resolve, delay);
-    });
+async function observableAlertV2(_symbolProp: string, _priceProp: number) {
+
+    const alerts = await dbSqlite<IAlerts>('TB_SCHEDULE_ALERTS')
+        .where({ active: true, symbol: _symbolProp })
+        .select("*")
+
+    if (alerts.length > 0) {
+        alerts.forEach(element => {
+            triggerAlertV2(_priceProp, element)
+        });
+    }
 }
 
-export { initBanco, backupBanco, observableAlert, handleSymbolsMt5 }
+export { startDatabase, handleSymbolsMt5 }
